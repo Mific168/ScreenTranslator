@@ -1,0 +1,288 @@
+<Window x:Class="ScreenTranslator.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:ScreenTranslator.Controls"
+        Title="Настройки — Экранный переводчик"
+        Width="620" Height="760" MinWidth="520" MinHeight="480"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Foreground="{DynamicResource TextBrush}"
+        FontFamily="{StaticResource UiFont}" FontSize="13"
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+
+    <Window.Resources>
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,12,0"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style x:Key="CardTitle" TargetType="TextBlock" BasedOn="{StaticResource SectionHeader}">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16,16,10,8">
+            <StackPanel Margin="0,0,6,0">
+                <TextBlock Text="Настройки" Style="{StaticResource PageTitle}" Margin="0,0,0,12"/>
+
+                <!-- Приветствие при первом запуске -->
+                <Border x:Name="FirstRunBanner" Style="{StaticResource Card}" Visibility="Collapsed"
+                        BorderBrush="{DynamicResource AccentBrush}">
+                    <StackPanel>
+                        <TextBlock Text="Добро пожаловать!" Style="{StaticResource CardTitle}"/>
+                        <TextBlock TextWrapping="Wrap">
+                            Приложение работает в фоне — значок находится в области уведомлений.
+                            Нажмите <Run x:Name="FirstRunHotkeyRun" FontWeight="SemiBold"/>, выделите область экрана с текстом,
+                            и перевод появится в окне рядом. Выберите браузер и сервис перевода, а для перевода
+                            прямо в окне без интернета скачайте офлайн-модели для своих языков (раздел «Перевод в окне»).
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <!-- ===== Горячие клавиши ===== -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Горячие клавиши" Style="{StaticResource CardTitle}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="8"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Выделить и перевести область" Style="{StaticResource Label}"/>
+                            <controls:HotkeyBox x:Name="SelectHotkeyBox" Grid.Column="1"/>
+                            <TextBlock Grid.Row="2" Text="Повторить последнюю область" Style="{StaticResource Label}"/>
+                            <controls:HotkeyBox x:Name="RepeatHotkeyBox" Grid.Row="2" Grid.Column="1"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ===== Перевод в окне ===== -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Перевод в окне" Style="{StaticResource CardTitle}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Провайдер перевода" Style="{StaticResource Label}"/>
+                            <ComboBox x:Name="ProviderCombo" Grid.Column="1" SelectionChanged="ProviderCombo_SelectionChanged">
+                                <ComboBoxItem Content="Встроенный офлайн-переводчик (без интернета)" Tag="Offline"/>
+                                <ComboBoxItem Content="Перевод онлайн (Google, нужен интернет)" Tag="Online"/>
+                                <ComboBoxItem Content="LibreTranslate" Tag="LibreTranslate"/>
+                            </ComboBox>
+                        </Grid>
+
+                        <!-- Встроенный офлайн-переводчик -->
+                        <StackPanel x:Name="OfflinePanel" Margin="0,10,0,0">
+                            <TextBlock Style="{StaticResource CaptionText}" Margin="0,0,0,8">
+                                Нейросетевые модели Opus-MT работают прямо в приложении: без интернета, сервера и Docker.
+                                Каждое направление перевода — отдельная модель (~110 МБ). Для пар без прямой модели
+                                (например, немецкий → русский) перевод идёт через английский: нужны модели
+                                «Немецкий → Английский» и «Английский → Русский».
+                            </TextBlock>
+                            <Button x:Name="InstallRecommendedButton" HorizontalAlignment="Left" Margin="0,0,0,8"
+                                    Style="{StaticResource AccentButton}" Click="InstallRecommendedButton_Click"/>
+                            <Border BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1" CornerRadius="6"
+                                    MaxHeight="260">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl x:Name="OfflineModelsList" Margin="4">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="6,4">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
+                                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Status}" VerticalAlignment="Center"
+                                                               Margin="10,0" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}"
+                                                               MaxWidth="220" TextTrimming="CharacterEllipsis" ToolTip="{Binding Status}"/>
+                                                    <Button Grid.Column="2" Content="{Binding ActionText}" MinWidth="86" MinHeight="26"
+                                                            Padding="10,2" Tag="{Binding}" Click="ModelActionButton_Click"/>
+                                                    <ProgressBar Grid.Row="1" Grid.ColumnSpan="3" Margin="0,4,0,0"
+                                                                 Minimum="0" Maximum="1" Value="{Binding Progress, Mode=OneWay}"
+                                                                 Visibility="{Binding ProgressVisibility}"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Border>
+                            <CheckBox x:Name="PreferQualityCheck" Margin="0,10,0,0"
+                                      Content="Переводить моделью NLLB-200, если она установлена"/>
+                            <TextBlock Style="{StaticResource CaptionText}" Margin="26,0,0,0"
+                                       Text="NLLB-200 лучше понимает обычный текст и переводит между любыми языками без английского, но медленнее (0,5–3 с на фразу) и во время перевода занимает до 3 ГБ памяти. Модели Opus-MT — быстрые (0,1–1,5 с) и лёгкие."/>
+                        </StackPanel>
+
+                        <!-- Перевод онлайн -->
+                        <StackPanel x:Name="OnlinePanel" Margin="0,10,0,0">
+                            <TextBlock Style="{StaticResource CaptionText}">
+                                Текст переводится Google Переводчиком через бесплатный адрес без ключа и регистрации.
+                                Нужен интернет; распознанный текст отправляется в Google. Адрес неофициальный: при очень
+                                частых запросах Google может на время ограничить доступ — тогда переключитесь на офлайн-перевод.
+                            </TextBlock>
+                        </StackPanel>
+
+                        <!-- LibreTranslate -->
+                        <StackPanel x:Name="LibrePanel" Margin="0,10,0,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="220"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="8"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Адрес сервера" Style="{StaticResource Label}"/>
+                                <TextBox x:Name="LibreUrlBox" Grid.Column="1" Tag="https://libretranslate.com"/>
+                                <TextBlock Grid.Row="2" Text="API-ключ (если нужен)" Style="{StaticResource Label}"/>
+                                <PasswordBox x:Name="LibreKeyBox" Grid.Row="2" Grid.Column="1"/>
+                            </Grid>
+                            <TextBlock Style="{StaticResource CaptionText}" Margin="220,6,0,0"
+                                       Text="Публичный libretranslate.com требует ключ. Свой сервер можно поднять командой: docker run -p 5000:5000 libretranslate/libretranslate (адрес http://localhost:5000)."/>
+                        </StackPanel>
+
+                        <StackPanel x:Name="TestPanel" Orientation="Horizontal" Margin="220,10,0,0">
+                            <Button x:Name="TestButton" Content="Проверить подключение" Click="TestButton_Click"/>
+                            <TextBlock x:Name="TestResultText" VerticalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap"
+                                       MaxWidth="220"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- ===== Браузер ===== -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Перевод в браузере" Style="{StaticResource CardTitle}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Браузер" Style="{StaticResource Label}"/>
+                            <ComboBox x:Name="BrowserCombo" Grid.Column="1" DisplayMemberPath="Name"/>
+                            <Button Grid.Column="2" Style="{StaticResource IconButton}" Content="&#xE72C;" Margin="4,0,0,0"
+                                    ToolTip="Обновить список браузеров" Click="RefreshBrowsers_Click"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource CaptionText}" Margin="220,6,0,0"
+                                   Text="В этом браузере открываются Google Переводчик и Яндекс Переводчик — кнопками «Google» и «Яндекс» в окне перевода."/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ===== Языки ===== -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Языки" Style="{StaticResource CardTitle}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="8"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Родной язык" Style="{StaticResource Label}"/>
+                            <ComboBox x:Name="NativeLangCombo" Grid.Column="1" DisplayMemberPath="Name" SelectedValuePath="Code"/>
+                            <TextBlock Grid.Row="2" Text="Язык распознавания (OCR)" Style="{StaticResource Label}"/>
+                            <ComboBox x:Name="OcrLangCombo" Grid.Row="2" Grid.Column="1" DisplayMemberPath="Name" SelectedValuePath="Code"/>
+                        </Grid>
+                        <TextBlock Style="{StaticResource CaptionText}" Margin="220,6,0,0">
+                            <Run x:Name="OcrInstalledRun"/>
+                            <Hyperlink Click="OcrHelp_Click">Как добавить язык распознавания?</Hyperlink>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <!-- ===== Окно перевода ===== -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Окно перевода" Style="{StaticResource CardTitle}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Где открывать" Style="{StaticResource Label}"/>
+                            <ComboBox x:Name="PlacementCombo" Grid.Column="1" SelectionChanged="PlacementCombo_SelectionChanged">
+                                <ComboBoxItem Content="Рядом с выделенной областью" Tag="NearSelection"/>
+                                <ComboBoxItem Content="В выбранной зоне экрана" Tag="CustomZone"/>
+                                <ComboBoxItem Content="Там, где окно было в прошлый раз" Tag="LastPosition"/>
+                                <ComboBoxItem Content="По центру экрана" Tag="ScreenCenter"/>
+                            </ComboBox>
+                        </Grid>
+                        <StackPanel x:Name="ZonePanel" Orientation="Horizontal" Margin="220,8,0,0">
+                            <Button x:Name="PickZoneButton" Click="PickZoneButton_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE7C4;" FontFamily="{StaticResource IconFont}" Margin="0,1,6,0"/>
+                                    <TextBlock Text="Выбрать зону на экране…"/>
+                                </StackPanel>
+                            </Button>
+                            <TextBlock x:Name="ZoneText" VerticalAlignment="Center" Margin="10,0,0,0"
+                                       Foreground="{DynamicResource SecondaryTextBrush}" TextWrapping="Wrap" MaxWidth="200"/>
+                        </StackPanel>
+                        <TextBlock x:Name="PlacementHint" Style="{StaticResource CaptionText}" Margin="220,6,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ===== Поведение ===== -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Поведение" Style="{StaticResource CardTitle}"/>
+                        <CheckBox x:Name="CloseOnDeactivateCheck" Content="Закрывать окно перевода при клике вне окна"/>
+                        <CheckBox x:Name="AutoCopyReplyCheck" Content="Автоматически копировать перевод ответа в буфер обмена"/>
+                        <CheckBox x:Name="AutoStartCheck" Content="Запускать вместе с Windows"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ===== История ===== -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="История" Style="{StaticResource CardTitle}"/>
+                        <CheckBox x:Name="HistoryEnabledCheck" Content="Сохранять последние 50 переводов"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button Content="Открыть историю" Click="OpenHistory_Click" Margin="0,0,6,0"/>
+                            <Button Content="Очистить историю" Click="ClearHistory_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Style="{StaticResource CaptionText}" Margin="2,4,0,8">
+                    Настройки и история хранятся в папке
+                    <Hyperlink Click="OpenDataFolder_Click"><Run x:Name="DataFolderRun"/></Hyperlink>
+                </TextBlock>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource SeparatorBrush}"
+                BorderThickness="0,1,0,0" Padding="16,12">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="SaveButton" Style="{StaticResource AccentButton}" Content="Сохранить" MinWidth="110"
+                        IsDefault="True" Click="SaveButton_Click" Margin="0,0,8,0"/>
+                <Button Content="Отмена" MinWidth="110" IsCancel="True" Click="CancelButton_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
